@@ -1,15 +1,16 @@
 var express = require('express'),
 	cons    = require('consolidate'),
-	swig    = require('swig');
+	swig    = require('swig')
+	process = require('process');
 
 var	passport = require('passport'),
 	util = require('util'),
 	PocketStrategy = require('passport-pocket');
 
 // Pocket App token
-POCKET_CONSUMER_KEY = "Pocket consumer key";
+POCKET_CONSUMER_KEY = process.env.POCKET_CONSUMER_KEY;
 
-if(POCKET_CONSUMER_KEY === "Pocket consumer key"){
+if(!POCKET_CONSUMER_KEY){
 	console.log('WARNING!!! Need a pocket costumer key');
 }
 
@@ -25,7 +26,7 @@ passport.deserializeUser(function(obj, done) {
 // Passport Set up
 var pocketStrategy = new PocketStrategy({
 		consumerKey    : POCKET_CONSUMER_KEY,
-		callbackURL    : "http://127.0.0.1:3000/auth/pocket/callback"
+		callbackURL    : "http://localhost:3000/auth/pocket/callback"
 	},function(username, accessToken, done) {
 		process.nextTick(function () {
 			return done(null, {
