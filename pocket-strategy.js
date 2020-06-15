@@ -38,7 +38,7 @@ OAuth.prototype.getOAuthAccessToken = function (code, callback) {
             if(response.statusCode === 400) { return callback(400, null)}
             if(response.statusCode === 403) { return callback(403, null)}
 
-            callback(response.body, data.username, data.access_token);
+            callback(null, response.body.username, response.body.access_token);
         }
     );
 }
@@ -53,14 +53,13 @@ OAuth.prototype.getOAuthRequestToken = function (callback) {
             redirect_uri: oauth.options.callbackURL
         },
         oauth.requestOptions,
-        function (error, response, body) {
+        function (error, response) {
             if(error) { return callback(error, null)}
             if(response.statusCode === 400) {return callback(400, null)}
 
-            var data = JSON.parse(body);
-            var url  = oauth._formatAuthUrl(data.code, oauth.options.callbackURL);
+            var url  = oauth._formatAuthUrl(response.body.code, oauth.options.callbackURL);
 
-            callback(data, data.code, url);
+            callback(data, response.body.code, url);
         }
     );
 }
@@ -136,12 +135,8 @@ Strategy.prototype.getUnreadItems = function(accessToken, callback) {
             state        : 'unread'
         },
         strategy.requestOptions,
-        function (error, response, body) {
-            if(body){
-                var data = JSON.parse(body);
-            }
-
-            callback(error, data)
+        function (error, response) {
+            callback(error, response.body)
         }
     );
 };
