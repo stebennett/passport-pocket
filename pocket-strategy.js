@@ -6,6 +6,12 @@ function OAuth(options){
     this.options = options;
     this.authUrl = "https://getpocket.com/auth/authorize?request_token={:requestToken}&redirect_uri={:redirectUri}"
 
+    this.defaultHeaders = {
+        'x-accept': 'application/json',
+        'accept': '*/*',
+        'content-type': 'application/json'
+    }
+
     return this;
 }
 
@@ -31,14 +37,15 @@ OAuth.prototype.getOAuthAccessToken = function (code, callback) {
     var oauth = this;
 
     request.post({
-        "headers" : {'content-type' : 'application/x-www-form-urlencoded'},
-        "url"     : oauth.options.authorizationURL,
-        "form"    : {
-            "consumer_key" : oauth.options.consumerKey,
-            "code"         : code
+        headers : oauth.defaultHeaders,
+        url     : oauth.options.authorizationURL,
+        body: {
+            consumer_key : oauth.options.consumerKey,
+            code         : code
         }
     }, function (error, response, body) {
         if(error) { return callback(error, null)}
+        if(response.statusCode === 400) { return callback(400, null)}
         if(response.statusCode === 403) { return callback(403, null)}
 
         var data = oauth._formDataToJson(body);
@@ -51,14 +58,15 @@ OAuth.prototype.getOAuthRequestToken = function (callback) {
     var oauth = this;
 
     request.post({
-        "headers" : {'content-type' : 'application/x-www-form-urlencoded'},
-        "url"     : oauth.options.requestTokenURL,
-        "form"    : {
-            "consumer_key" : oauth.options.consumerKey,
-            "redirect_uri" : oauth.options.callbackURL
+        headers: oauth.defaultHeaders,
+        url     : oauth.options.requestTokenURL,
+        body    : {
+            consumer_key: oauth.options.consumerKey,
+            redirect_uri: oauth.options.callbackURL
         }
     }, function (error, response, body) {
         if(error) { return callback(error, null)}
+        if(response.statusCode === 400) {return callback(400, null)}
 
         var data = oauth._formDataToJson(body);
         var url  = oauth._formatAuthUrl(data.code, oauth.options.callbackURL);
@@ -131,12 +139,12 @@ Strategy.prototype.authenticate = function(req, options) {
 Strategy.prototype.getUnreadItems = function(accessToken, callback) {
     var strategy = this;
     request.post({
-        "headers" : {'content-type' : 'application/x-www-form-urlencoded'},
-        "url"     : strategy._options.retrive,
-        "form"    : {
-            "consumer_key" : strategy._options.consumerKey,
-            "access_token" : accessToken,
-            "state"        : 'unread'
+        headers : strategy.defaultHeaders,
+        url     : strategy._options.retrive,
+        body    : {
+            consumer_key : strategy._options.consumerKey,
+            access_token : accessToken,
+            state        : 'unread'
         }
     }, function (error, response, body) {
         if(body){
