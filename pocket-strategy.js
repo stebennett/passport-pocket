@@ -59,7 +59,7 @@ OAuth.prototype.getOAuthRequestToken = function (callback) {
 
             var url  = oauth._formatAuthUrl(response.body.code, oauth.options.callbackURL);
 
-            callback(data, response.body.code, url);
+            callback(null, response.body.code, url);
         }
     );
 }
