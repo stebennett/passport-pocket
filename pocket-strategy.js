@@ -1,4 +1,4 @@
-var request = require('request'),
+var needle = require('needle'),
     passport = require('passport'),
     util = require('util');
 
@@ -6,10 +6,13 @@ function OAuth(options){
     this.options = options;
     this.authUrl = "https://getpocket.com/auth/authorize?request_token={:requestToken}&redirect_uri={:redirectUri}"
 
-    this.defaultHeaders = {
-        'x-accept': 'application/json',
-        'accept': '*/*',
-        'content-type': 'application/json'
+    this.requestOptions = {
+        json: true,
+        headers: {
+            'x-accept': 'application/json',
+            'accept': '*/*',
+            'content-type': 'application/json'
+        }
     }
 
     return this;
@@ -23,41 +26,43 @@ OAuth.prototype._formatAuthUrl = function(token, redirectUri) {
 OAuth.prototype.getOAuthAccessToken = function (code, callback) {
     var oauth = this;
 
-    request.post({
-        headers : oauth.defaultHeaders,
-        url     : oauth.options.authorizationURL,
-        body: {
+    needle.post(
+        oauth.options.authorizationURL,
+        {
             consumer_key : oauth.options.consumerKey,
             code         : code
-        }
-    }, function (error, response, body) {
-        if(error) { return callback(error, null)}
-        if(response.statusCode === 400) { return callback(400, null)}
-        if(response.statusCode === 403) { return callback(403, null)}
+        },
+        oauth.requestOptions,
+        function(error, response) {
+            if(error) { return callback(error, null)}
+            if(response.statusCode === 400) { return callback(400, null)}
+            if(response.statusCode === 403) { return callback(403, null)}
 
-        callback(JSON.parse(body), data.username, data.access_token);
-    });
+            callback(response.body, data.username, data.access_token);
+        }
+    );
 }
 
 OAuth.prototype.getOAuthRequestToken = function (callback) {
     var oauth = this;
 
-    request.post({
-        headers: oauth.defaultHeaders,
-        url     : oauth.options.requestTokenURL,
-        body    : {
+    needle.post(
+        oauth.options.requestTokenURL,
+        {
             consumer_key: oauth.options.consumerKey,
             redirect_uri: oauth.options.callbackURL
+        },
+        oauth.requestOptions,
+        function (error, response, body) {
+            if(error) { return callback(error, null)}
+            if(response.statusCode === 400) {return callback(400, null)}
+
+            var data = JSON.parse(body);
+            var url  = oauth._formatAuthUrl(data.code, oauth.options.callbackURL);
+
+            callback(data, data.code, url);
         }
-    }, function (error, response, body) {
-        if(error) { return callback(error, null)}
-        if(response.statusCode === 400) {return callback(400, null)}
-
-        var data = JSON.parse(body);
-        var url  = oauth._formatAuthUrl(data.code, oauth.options.callbackURL);
-
-        callback(data, data.code, url);
-    });
+    );
 }
 
 function Strategy(options, verify) {
@@ -123,40 +128,22 @@ Strategy.prototype.authenticate = function(req, options) {
 
 Strategy.prototype.getUnreadItems = function(accessToken, callback) {
     var strategy = this;
-    request.post({
-        headers : strategy.defaultHeaders,
-        url     : strategy._options.retrive,
-        body    : {
+    needle.post(
+        strategy._options.retrive,
+        {
             consumer_key : strategy._options.consumerKey,
             access_token : accessToken,
             state        : 'unread'
-        }
-    }, function (error, response, body) {
-        if(body){
-            var data = JSON.parse(body);
-        }
+        },
+        strategy.requestOptions,
+        function (error, response, body) {
+            if(body){
+                var data = JSON.parse(body);
+            }
 
-        callback(error, data)
-    });
+            callback(error, data)
+        }
+    );
 };
-
-// http://getpocket.com/developer/docs/v3/modify
-Strategy.prototype.modify = function(actions, accessToken, callback) {
-    var strategy = this;
-
-    request({
-        method: 'POST',
-
-        // querystring is used because when using 'form',
-        // 'actions' are encoded incorrectly
-        url: 'https://getpocket.com/v3/send?actions=' + encodeURIComponent(JSON.stringify(actions)) + '&access_token=' + accessToken + '&consumer_key=' + strategy._options.consumerKey,
-    }, function (error, response, body) {
-        if (body) {
-            var data = JSON.parse(body);
-        }
-
-        callback(error, data)
-    });
-}
 
 module.exports = Strategy;

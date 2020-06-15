@@ -8,8 +8,8 @@
         "url": "git://github.com/stebennett/passport-pocket.git"
     },
     "dependencies": {
-        "passport": "0.4.1",
-        "request": "2.88.0"
+        "needle": "^2.5.0",
+        "passport": "0.4.1"
     },
     "keywords": [
         "passport",
