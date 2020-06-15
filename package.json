@@ -1,15 +1,15 @@
 {
     "name": "passport-pocket",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "description": "Pocket authentication strategy for Passport.",
     "main": "./pocket-strategy.js",
-    "repository":   {
+    "repository": {
         "type": "git",
-        "url" : "git://github.com/Siedrix/passport-pocket.git"
+        "url": "git://github.com/stebennett/passport-pocket.git"
     },
     "dependencies": {
-        "passport": "0.1.15",
-        "request" : "2.12.0"
+        "passport": "0.4.1",
+        "request": "2.88.0"
     },
     "keywords": [
         "passport",
