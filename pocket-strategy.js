@@ -15,19 +15,6 @@ function OAuth(options){
     return this;
 }
 
-OAuth.prototype._formDataToJson = function (formData) {
-    var json = {};
-
-    formData.split('&').forEach(function (item) {
-        var itemKey   = item.split('=')[0],
-            itemValue = item.split('=')[1];
-
-        json[itemKey] = itemValue;
-    });
-
-    return json;
-}
-
 OAuth.prototype._formatAuthUrl = function(token, redirectUri) {
     return this.authUrl.replace('{:requestToken}', token)
      .replace('{:redirectUri}', redirectUri);
@@ -48,9 +35,7 @@ OAuth.prototype.getOAuthAccessToken = function (code, callback) {
         if(response.statusCode === 400) { return callback(400, null)}
         if(response.statusCode === 403) { return callback(403, null)}
 
-        var data = oauth._formDataToJson(body);
-
-        callback(null, data.username, data.access_token);
+        callback(JSON.parse(body), data.username, data.access_token);
     });
 }
 
@@ -68,10 +53,10 @@ OAuth.prototype.getOAuthRequestToken = function (callback) {
         if(error) { return callback(error, null)}
         if(response.statusCode === 400) {return callback(400, null)}
 
-        var data = oauth._formDataToJson(body);
+        var data = JSON.parse(body);
         var url  = oauth._formatAuthUrl(data.code, oauth.options.callbackURL);
 
-        callback(null, data.code, url);
+        callback(data, data.code, url);
     });
 }
 
